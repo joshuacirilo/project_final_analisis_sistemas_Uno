@@ -2,6 +2,16 @@ const NAME_PATTERN = /^[\p{L}\s\-'.]+$/u;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
+export const REGISTER_ROLE_OPTIONS = [
+    { value: 'Recepcionista', label: 'Recepcionista' },
+    { value: 'Médico', label: 'Médico' },
+    { value: 'Enfermera', label: 'Enfermera' },
+    { value: 'TecnicoLab', label: 'Técnico de laboratorio' },
+    { value: 'Admin', label: 'Administrador' },
+];
+
+const VALID_ROLES = REGISTER_ROLE_OPTIONS.map((option) => option.value);
+
 const MESSAGES = {
     tenantId: {
         required: 'El ID de tenant es obligatorio.',
@@ -23,6 +33,10 @@ const MESSAGES = {
         required: 'Debes confirmar la contraseña.',
         mismatch: 'Las contraseñas no coinciden.',
     },
+    role: {
+        required: 'Debes seleccionar un rol.',
+        invalid: 'El rol seleccionado no es válido.',
+    },
 };
 
 /**
@@ -40,6 +54,7 @@ export function validateRegisterForm(form) {
     const email = form.email?.trim().toLowerCase() ?? '';
     const password = form.password ?? '';
     const passwordConfirmation = form.passwordConfirmation ?? '';
+    const role = form.role ?? '';
 
     if (! tenantId) {
         errors.tenantId = MESSAGES.tenantId.required;
@@ -71,6 +86,12 @@ export function validateRegisterForm(form) {
         errors.passwordConfirmation = MESSAGES.passwordConfirmation.mismatch;
     }
 
+    if (! role) {
+        errors.role = MESSAGES.role.required;
+    } else if (! VALID_ROLES.includes(role)) {
+        errors.role = MESSAGES.role.invalid;
+    }
+
     return {
         errors,
         isValid: Object.keys(errors).length === 0,
@@ -91,7 +112,12 @@ export function mapApiErrors(apiErrors = {}) {
         email: '',
         password: '',
         passwordConfirmation: '',
+        role: '',
     };
+
+    if (apiErrors.role?.[0]) {
+        fieldErrors.role = apiErrors.role[0];
+    }
 
     if (apiErrors.name?.[0]) {
         fieldErrors.name = apiErrors.name[0];

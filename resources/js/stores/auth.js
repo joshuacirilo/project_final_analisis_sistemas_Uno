@@ -29,7 +29,7 @@ export const useAuthStore = defineStore('auth', {
 
             return data;
         },
-        async register({ name, email, password, passwordConfirmation, tenantId }) {
+        async register({ name, email, password, passwordConfirmation, tenantId, role }) {
             this.setTenantId(tenantId);
 
             const { data } = await api.post('/auth/register', {
@@ -37,6 +37,7 @@ export const useAuthStore = defineStore('auth', {
                 email,
                 password,
                 password_confirmation: passwordConfirmation,
+                role,
             });
 
             this.persistSession(data);

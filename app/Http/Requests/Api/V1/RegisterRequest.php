@@ -44,6 +44,11 @@ class RegisterRequest extends FormRequest
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols(),
             ],
+            'role' => [
+                'required',
+                'string',
+                Rule::exists('roles', 'name')->where('guard_name', 'api'),
+            ],
         ];
     }
 
@@ -64,6 +69,8 @@ class RegisterRequest extends FormRequest
             'password.required' => 'La contraseña es obligatoria.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'password' => 'La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y un símbolo.',
+            'role.required' => 'Debes seleccionar un rol.',
+            'role.exists' => 'El rol seleccionado no es válido.',
         ];
     }
 
@@ -77,6 +84,7 @@ class RegisterRequest extends FormRequest
             'email' => 'correo electrónico',
             'password' => 'contraseña',
             'password_confirmation' => 'confirmación de contraseña',
+            'role' => 'rol',
         ];
     }
 }

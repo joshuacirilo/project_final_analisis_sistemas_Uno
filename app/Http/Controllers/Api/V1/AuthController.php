@@ -26,7 +26,7 @@ class AuthController extends Controller
             'password' => $validated['password'],
         ]);
 
-        $user->assignRole('Recepcionista');
+        $user->assignRole($validated['role']);
 
         $token = JWTAuth::fromUser($user);
 

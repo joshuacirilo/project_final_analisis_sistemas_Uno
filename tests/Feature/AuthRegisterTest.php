@@ -163,7 +163,27 @@ class AuthRegisterTest extends TestCase
         $response = $this->postJson('/api/v1/auth/register', [], $this->tenantHeaders());
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email', 'password']);
+            ->assertJsonValidationErrors(['name', 'email', 'password', 'role']);
+    }
+
+    public function test_register_assigns_selected_role(): void
+    {
+        $payload = $this->validPayload(['role' => 'Médico']);
+
+        $response = $this->postJson('/api/v1/auth/register', $payload, $this->tenantHeaders());
+
+        $response->assertCreated()
+            ->assertJsonPath('user.roles.0.name', 'Médico');
+    }
+
+    public function test_register_rejects_invalid_role(): void
+    {
+        $payload = $this->validPayload(['role' => 'SuperAdmin']);
+
+        $response = $this->postJson('/api/v1/auth/register', $payload, $this->tenantHeaders());
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['role']);
     }
 
     public function test_register_rejects_unknown_tenant(): void
@@ -189,6 +209,7 @@ class AuthRegisterTest extends TestCase
             'email' => 'maria@example.com',
             'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
+            'role' => 'Recepcionista',
         ], $overrides);
     }
 

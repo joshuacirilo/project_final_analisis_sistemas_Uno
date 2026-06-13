@@ -158,6 +158,54 @@
                     </p>
                 </div>
 
+                <!-- Role -->
+                <div
+                    class="auth-field space-y-1 transition-transform"
+                    :class="{ 'scale-[1.01]': focusedField === 'role' }"
+                >
+                    <label
+                        class="text-sm font-medium text-on-surface"
+                        for="role"
+                    >
+                        Rol en el hospital
+                    </label>
+                    <select
+                        id="role"
+                        v-model="form.role"
+                        class="w-full rounded-lg border bg-surface px-4 py-2.5 text-base text-on-surface transition-all focus:outline-none focus:ring-1"
+                        :class="fieldBorderClass('role')"
+                        @focus="focusedField = 'role'"
+                        @blur="onFieldBlur('role')"
+                    >
+                        <option
+                            disabled
+                            value=""
+                        >
+                            Selecciona un rol
+                        </option>
+                        <option
+                            v-for="option in roleOptions"
+                            :key="option.value"
+                            :value="option.value"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </select>
+                    <p
+                        v-if="errors.role"
+                        class="flex items-center gap-1 text-xs font-semibold text-error"
+                    >
+                        <span class="material-symbols-outlined text-sm">error</span>
+                        {{ errors.role }}
+                    </p>
+                    <p
+                        v-else
+                        class="text-xs font-semibold text-on-surface-variant"
+                    >
+                        Define el perfil del usuario dentro del hospital
+                    </p>
+                </div>
+
                 <!-- Password -->
                 <div
                     class="auth-field space-y-1 transition-transform"
@@ -292,7 +340,7 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AuthPageShell from '@/modules/auth/layouts/AuthPageShell.vue';
-import { mapApiErrors, validateRegisterForm } from '@/modules/auth/composables/useRegisterValidation';
+import { mapApiErrors, REGISTER_ROLE_OPTIONS, validateRegisterForm } from '@/modules/auth/composables/useRegisterValidation';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
@@ -300,10 +348,13 @@ const auth = useAuthStore();
 
 const DEFAULT_TENANT_ID = '00000000-0000-4000-8000-000000000001';
 
+const roleOptions = REGISTER_ROLE_OPTIONS;
+
 const form = reactive({
     tenantId: auth.tenantId ?? DEFAULT_TENANT_ID,
     name: '',
     email: '',
+    role: 'Recepcionista',
     password: '',
     passwordConfirmation: '',
 });
@@ -312,6 +363,7 @@ const errors = reactive({
     tenantId: '',
     name: '',
     email: '',
+    role: '',
     password: '',
     passwordConfirmation: '',
 });
@@ -358,6 +410,7 @@ async function handleSubmit() {
         tenantId: validationErrors.tenantId ?? '',
         name: validationErrors.name ?? '',
         email: validationErrors.email ?? '',
+        role: validationErrors.role ?? '',
         password: validationErrors.password ?? '',
         passwordConfirmation: validationErrors.passwordConfirmation ?? '',
     });
@@ -375,6 +428,7 @@ async function handleSubmit() {
             password: form.password,
             passwordConfirmation: form.passwordConfirmation,
             tenantId: form.tenantId.trim(),
+            role: form.role,
         });
 
         await router.push({ name: 'register-success' });
