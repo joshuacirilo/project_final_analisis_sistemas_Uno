@@ -77,4 +77,41 @@ export function validateRegisterForm(form) {
     };
 }
 
+/**
+ * Mapea errores 422 de Laravel al formulario Vue.
+ *
+ * @param {Record<string, string[]|undefined>} apiErrors
+ * @returns {{ fieldErrors: Record<string, string>, globalError: string }}
+ */
+export function mapApiErrors(apiErrors = {}) {
+    /** @type {Record<string, string>} */
+    const fieldErrors = {
+        tenantId: '',
+        name: '',
+        email: '',
+        password: '',
+        passwordConfirmation: '',
+    };
+
+    if (apiErrors.name?.[0]) {
+        fieldErrors.name = apiErrors.name[0];
+    }
+
+    if (apiErrors.email?.[0]) {
+        fieldErrors.email = apiErrors.email[0];
+    }
+
+    if (apiErrors.password?.[0]) {
+        fieldErrors.password = apiErrors.password[0];
+    }
+
+    if (apiErrors.password_confirmation?.[0]) {
+        fieldErrors.passwordConfirmation = apiErrors.password_confirmation[0];
+    }
+
+    const firstFieldError = Object.values(fieldErrors).find(Boolean) ?? '';
+
+    return { fieldErrors, globalError: firstFieldError };
+}
+
 export { MESSAGES as registerValidationMessages };

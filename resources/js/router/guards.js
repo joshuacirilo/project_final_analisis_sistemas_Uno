@@ -1,14 +1,14 @@
 export function authGuard(to, from, next) {
     const token = localStorage.getItem('auth_token');
 
-    if (to.meta.requiresAuth && ! token) {
-        next({ name: 'login' });
+    if (to.name === 'register' && token) {
+        next({ name: 'register-success' });
 
         return;
     }
 
-    if (to.meta.guest && token) {
-        next({ name: 'home' });
+    if (to.name === 'register-success' && ! token) {
+        next({ name: 'register' });
 
         return;
     }

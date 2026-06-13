@@ -1,167 +1,125 @@
-# Sprint 2 — Registro de usuarios (Backend)
+# Sprint 2 — Registro de usuarios (Implementación completa)
+
+> **Documentación general del módulo:** [Sprint completo — Registro de usuarios](../registro-usuarios/README.md)  
+> **Análisis previo (Sprint 1):** [sprint-01-registro-usuarios/README.md](../sprint-01-registro-usuarios/README.md)  
+> **Guía de pruebas:** [PRUEBAS.md](./PRUEBAS.md)
 
 **Módulo:** Registro de usuarios  
-**Alcance del sprint:** Validaciones del lado del servidor para `POST /api/v1/auth/register`  
-**Estado:** Backend completado · Frontend pendiente  
-**Documento base (análisis):** [Sprint 1 — Registro de usuarios](../sprint-01-registro-usuarios/README.md)
+**Estado:** Completado  
+**URL:** http://127.0.0.1:8000/
 
 ---
 
 ## 1. Objetivo del sprint
 
-Fortalecer el endpoint de registro existente con:
+Implementar el módulo de **registro de usuarios/pacientes** de punta a punta:
 
-- Validaciones robustas y centralizadas en un **Form Request**
-- Mensajes de error **en español**
-- Email **único por tenant** (evitar error 500 por restricción SQL)
-- Contraseña **fuerte** con confirmación obligatoria
-- **Tests automatizados** que cubran los casos críticos
-
----
-
-## 2. Resumen de avance
-
-| Área | Estado | Detalle |
-|------|--------|---------|
-| Form Request (`RegisterRequest`) | Completado | Reglas, normalización, mensajes ES |
-| Controlador (`AuthController@register`) | Completado | Refactorizado para usar Form Request |
-| Tests Feature | Completado | 8 tests, 35 assertions |
-| Documentación | Completado | Este README |
-| Frontend (`RegisterPage.vue`) | Pendiente | Sprint siguiente |
+1. Validaciones robustas en el **servidor** (Form Request, mensajes en español)
+2. **UI/UX** PulseCare Medical (formulario de registro)
+3. **Integración** frontend ↔ backend (Axios + Pinia)
+4. Pantalla de **registro exitoso** con opción de registrar otro paciente
+5. **Tests automatizados** y guía de pruebas manuales
 
 ---
 
-## 3. Flujo implementado
+## 2. Alcance entregado
+
+| Fase | Entregable | Estado |
+|------|------------|--------|
+| Backend | `RegisterRequest` + refactor `AuthController` | Completado |
+| Backend | 12 tests Feature en `AuthRegisterTest` | Completado |
+| Frontend | `RegisterPage.vue` — UI PulseCare | Completado |
+| Frontend | `RegisterSuccessPage.vue` — pantalla de éxito | Completado |
+| Integración | `auth.register()` + mapeo errores API | Completado |
+| UX | Flujo exclusivo: registro → éxito → otro paciente | Completado |
+| Docs | README sprint + PRUEBAS.md | Completado |
+
+---
+
+## 3. Flujo de la aplicación
+
+```mermaid
+flowchart LR
+    A["/ Registro"] -->|POST exitoso| B["/registro-exitoso"]
+    B -->|Registrar otro paciente| A
+    A -->|422 / 404| A
+```
+
+### Descripción paso a paso
+
+1. El usuario abre **`/`** y completa el formulario PulseCare.
+2. Validación **local** (`validateRegisterForm`) antes de llamar al API.
+3. Si pasa, **`auth.register()`** envía `POST /api/v1/auth/register` con `X-Tenant-ID`.
+4. **201** → redirect a **`/registro-exitoso`** con resumen del paciente registrado.
+5. Botón **"Registrar otro paciente"** → cierra sesión (`clearSession`) y vuelve a **`/`**.
+
+### Rutas activas
+
+| Ruta | Componente | Descripción |
+|------|------------|-------------|
+| `/` | `RegisterPage` | Formulario de registro (pantalla principal) |
+| `/registro-exitoso` | `RegisterSuccessPage` | Confirmación + registrar otro |
+| `/register` | redirect → `/` | Alias |
+| `/inicio`, `/login`, otras | redirect → `/` | Eliminadas del flujo |
+
+> **Nota:** La app se sirve desde **Laravel** (`:8000`). El puerto `:5173` es solo Vite (hot reload).
+
+---
+
+## 4. Flujo técnico backend
 
 ```mermaid
 sequenceDiagram
-    participant Client
+    participant Vue as RegisterPage
+    participant API as POST_auth_register
     participant TenantMW as TenantMiddleware
-    participant RegisterReq as RegisterRequest
-    participant AuthCtrl as AuthController
-    participant DB
+    participant Req as RegisterRequest
+    participant Ctrl as AuthController
 
-    Client->>TenantMW: POST /api/v1/auth/register + X-Tenant-ID
-    TenantMW->>TenantMW: Resuelve tenant
-    alt tenant invalido
-        TenantMW-->>Client: 400 o 404 JSON
+    Vue->>API: JSON + X-Tenant-ID
+    API->>TenantMW: Validar tenant
+    alt 400 / 404
+        TenantMW-->>Vue: Error JSON
     end
-    TenantMW->>RegisterReq: Request con tenant en attributes
-    RegisterReq->>RegisterReq: prepareForValidation trim/lowercase
-    RegisterReq->>RegisterReq: rules + messages
-    alt datos invalidos
-        RegisterReq-->>Client: 422 errors en espanol
-    else datos validos
-        RegisterReq->>AuthCtrl: validated()
-        AuthCtrl->>DB: INSERT users
-        AuthCtrl->>DB: assignRole Recepcionista
-        AuthCtrl-->>Client: 201 + JWT + user
+    TenantMW->>Req: rules + messages ES
+    alt 422
+        Req-->>Vue: errors por campo
+    else 201
+        Ctrl-->>Vue: JWT + user + rol Recepcionista
+        Vue->>Vue: redirect /registro-exitoso
     end
 ```
 
 ---
 
-## 4. Archivos creados y modificados
+## 5. Backend
 
-### Creados
+### RegisterRequest
 
-| Archivo | Propósito |
-|---------|-----------|
-| [`app/Http/Requests/Api/V1/RegisterRequest.php`](../../../app/Http/Requests/Api/V1/RegisterRequest.php) | Validación centralizada del registro |
-| [`tests/Feature/AuthRegisterTest.php`](../../../tests/Feature/AuthRegisterTest.php) | Tests del endpoint de registro |
-| `docs/sprints/sprint-02-registro-backend/README.md` | Documentación del sprint |
+**Archivo:** `app/Http/Requests/Api/V1/RegisterRequest.php`
 
-### Modificados
+| Campo | Reglas |
+|-------|--------|
+| `name` | required, min:2, max:255, regex letras/espacios/guiones/apóstrofes |
+| `email` | required, email:rfc, unique por `tenant_id` |
+| `password` | required, confirmed, `Password::min(8)->mixedCase()->numbers()->symbols()` |
 
-| Archivo | Cambio |
-|---------|--------|
-| [`app/Http/Controllers/Api/V1/AuthController.php`](../../../app/Http/Controllers/Api/V1/AuthController.php) | `register()` usa `RegisterRequest`; password sin `Hash::make()` manual |
+- Normalización: `trim(name)`, `lowercase(trim(email))`
+- Mensajes de error en **español**
 
-### Sin cambios
+### AuthController
 
-- `routes/api.php` — la ruta ya existía
-- Migraciones — el esquema de BD del Sprint 1 es suficiente
-- `TenantMiddleware.php` — sin modificaciones
-- Frontend Vue — pendiente para el siguiente sprint
+**Archivo:** `app/Http/Controllers/Api/V1/AuthController.php`
 
----
+- Usa `RegisterRequest`
+- Password hasheado por cast `'hashed'` del modelo `User`
+- Asigna rol **`Recepcionista`**
+- Devuelve JWT en respuesta 201
 
-## 5. Antes vs después
-
-### Antes (Sprint 1 — estado base)
-
-```php
-$validated = $request->validate([
-    'name' => ['required', 'string', 'max:255'],
-    'email' => ['required', 'email', 'max:255'],
-    'password' => ['required', 'string', 'min:8', 'confirmed'],
-]);
-// Email duplicado → error SQL 500
-// Mensajes de validación en inglés (default Laravel)
-// Hash::make() manual en el controlador
-```
-
-### Después (Sprint 2 — implementado)
-
-- Validación extraída a `RegisterRequest`
-- Email único scoped por `tenant_id` → respuesta **422** clara
-- Contraseña fuerte: `Password::min(8)->mixedCase()->numbers()->symbols()`
-- Normalización: `name` con trim, `email` en minúsculas
-- Mensajes personalizados en español
-- Hash delegado al cast `'password' => 'hashed'` del modelo `User`
-
----
-
-## 6. Reglas de validación (servidor)
-
-| Campo | Reglas Laravel | Descripción |
-|-------|----------------|-------------|
-| `name` | `required`, `string`, `min:2`, `max:255`, regex Unicode | Nombre legible; letras, espacios, `-`, `'` |
-| `email` | `required`, `string`, `email:rfc`, `max:255`, `Rule::unique(...)->where(tenant_id)` | Correo válido y único **por hospital** |
-| `password` | `required`, `string`, `confirmed`, `Password::min(8)->mixedCase()->numbers()->symbols()` | Contraseña fuerte + confirmación |
-| `password_confirmation` | (implícito por `confirmed`) | Debe coincidir con `password` |
-
-### Normalización automática (`prepareForValidation`)
-
-| Campo | Transformación |
-|-------|------------------|
-| `name` | `trim()` |
-| `email` | `Str::lower(trim())` |
-
-### Reglas de negocio (sin cambio)
-
-- El `tenant_id` **no** viene en el body; lo resuelve `TenantMiddleware` desde `X-Tenant-ID`
-- Rol asignado automáticamente: **`Recepcionista`**
-- Tras registro exitoso se emite **JWT** (login automático)
-
----
-
-## 7. Campos del formulario (referencia para frontend)
-
-El formulario de registro (Sprint 3 — frontend) debe incluir:
-
-| # | Etiqueta UI | Campo API | Tipo | Notas |
-|---|-------------|-----------|------|-------|
-| 1 | ID de tenant | *(cabecera `X-Tenant-ID`)* | text | Mismo patrón que `LoginPage.vue` |
-| 2 | Nombre completo | `name` | text | Mín. 2 caracteres |
-| 3 | Correo electrónico | `email` | email | Único por hospital |
-| 4 | Contraseña | `password` | password | Ver reglas fuertes abajo |
-| 5 | Confirmar contraseña | `password_confirmation` | password | Debe coincidir |
-
-**Ejemplo de contraseña válida:** `Password1!`
-
-**No incluir en el formulario:** rol (asignado en servidor), `tenant_id` en body.
-
----
-
-## 8. Contrato del API
-
-### Request
+### API
 
 ```
 POST /api/v1/auth/register
-Content-Type: application/json
-Accept: application/json
 X-Tenant-ID: 00000000-0000-4000-8000-000000000001
 ```
 
@@ -174,174 +132,204 @@ X-Tenant-ID: 00000000-0000-4000-8000-000000000001
 }
 ```
 
-### Respuesta exitosa — 201 Created
-
-```json
-{
-  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-  "token_type": "bearer",
-  "expires_in": 3600,
-  "user": {
-    "id": 1,
-    "tenant_id": "00000000-0000-4000-8000-000000000001",
-    "name": "María López",
-    "email": "maria@example.com",
-    "roles": [{ "name": "Recepcionista" }],
-    "tenant": { "name": "Hospital General San Marcos (demo)", ... }
-  }
-}
-```
-
-### Respuestas de error
-
-| HTTP | Origen | Ejemplo |
-|------|--------|---------|
-| 400 | `TenantMiddleware` | `"La cabecera X-Tenant-ID es obligatoria."` |
-| 404 | `TenantMiddleware` | `"Tenant no encontrado."` |
-| 422 | `RegisterRequest` | `{ "message": "...", "errors": { "campo": ["..."] } }` |
-
-#### Ejemplos 422
-
-**Email duplicado en el mismo hospital:**
-```json
-{
-  "message": "El correo electrónico ya está registrado en este hospital.",
-  "errors": {
-    "email": ["El correo electrónico ya está registrado en este hospital."]
-  }
-}
-```
-
-**Contraseña débil:**
-```json
-{
-  "message": "La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y un símbolo.",
-  "errors": {
-    "password": ["La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y un símbolo."]
-  }
-}
-```
-
-**Contraseñas no coinciden:**
-```json
-{
-  "message": "Las contraseñas no coinciden.",
-  "errors": {
-    "password": ["Las contraseñas no coinciden."]
-  }
-}
-```
-
-**Nombre inválido (muy corto):**
-```json
-{
-  "message": "El nombre debe tener al menos 2 caracteres.",
-  "errors": {
-    "name": ["El nombre debe tener al menos 2 caracteres."]
-  }
-}
-```
+| HTTP | Situación |
+|------|-----------|
+| 201 | Registro OK + JWT |
+| 400 | Sin cabecera `X-Tenant-ID` |
+| 404 | Tenant inexistente |
+| 422 | Validación fallida (mensajes ES) |
 
 ---
 
-## 9. Tests automatizados
+## 6. Frontend
 
-**Archivo:** `tests/Feature/AuthRegisterTest.php`
+### Pantallas
 
-| Test | Qué verifica |
-|------|--------------|
-| `test_register_creates_user_and_returns_token` | 201, JWT, rol Recepcionista, persistencia en BD |
-| `test_register_rejects_duplicate_email_in_same_tenant` | 422 con mensaje de email duplicado |
-| `test_register_allows_same_email_in_different_tenant` | Mismo email en otro tenant → 201 |
-| `test_register_rejects_weak_password` | 422 en campo password |
-| `test_register_rejects_password_confirmation_mismatch` | 422 "Las contraseñas no coinciden." |
-| `test_register_rejects_invalid_name` | 422 en campo name |
-| `test_register_requires_tenant_header` | 400 sin `X-Tenant-ID` |
-| `test_register_normalizes_email_to_lowercase` | `Maria@Example.COM` → `maria@example.com` |
+| Archivo | Rol |
+|---------|-----|
+| `RegisterPage.vue` | Formulario PulseCare — 5 campos, validación local, llamada API |
+| `RegisterSuccessPage.vue` | Éxito, resumen (nombre, email, rol), botón otro paciente |
+| `AuthPageShell.vue` | Layout full-page con patrón médico de fondo |
 
-### Ejecutar tests
+### Store Pinia
+
+**Archivo:** `resources/js/stores/auth.js`
+
+```javascript
+async register({ name, email, password, passwordConfirmation, tenantId }) {
+    this.setTenantId(tenantId);
+    const { data } = await api.post('/auth/register', {
+        name, email, password,
+        password_confirmation: passwordConfirmation,
+    });
+    this.persistSession(data);
+    return data;
+}
+```
+
+### Validación cliente
+
+**Archivo:** `resources/js/modules/auth/composables/useRegisterValidation.js`
+
+- `validateRegisterForm()` — reglas alineadas al backend
+- `mapApiErrors()` — convierte respuesta 422 a errores por campo
+
+### Router y guards
+
+**Archivos:** `resources/js/router/index.js`, `guards.js`
+
+- Solo rutas de registro y éxito
+- Si hay token y se visita `/` → redirect a `/registro-exitoso`
+- Si no hay token en éxito → redirect a `/`
+- `App.vue` simplificado: solo `<router-view />` (sin nav lateral)
+
+---
+
+## 7. UI/UX — PulseCare Medical
+
+| Elemento | Detalle |
+|----------|---------|
+| Marca | Logo `medical_services` + "PulseCare Medical" |
+| Tipografía | Inter (Google Fonts) |
+| Iconos | Material Symbols Outlined |
+| Colores | Tokens en `resources/css/app.css` |
+| Campos | Tenant UUID, nombre, email, contraseña, confirmación |
+| Feedback | Banners error (rojo) animados; éxito en pantalla dedicada |
+| Contraseña | Toggle mostrar/ocultar |
+
+---
+
+## 8. Campos del formulario
+
+| # | Etiqueta | Envío | Notas |
+|---|----------|-------|-------|
+| 1 | ID de tenant (UUID) | Cabecera `X-Tenant-ID` | Demo: `00000000-0000-4000-8000-000000000001` |
+| 2 | Nombre completo | `name` | Mín. 2 caracteres |
+| 3 | Correo electrónico | `email` | Único por hospital |
+| 4 | Contraseña | `password` | Mín. 8, mayúscula, minúscula, número, símbolo |
+| 5 | Confirmar contraseña | `password_confirmation` | Debe coincidir |
+
+**Ejemplo válido:** `Password1!`
+
+---
+
+## 9. Inventario de archivos
+
+### Backend (creados / modificados)
+
+| Archivo | Acción |
+|---------|--------|
+| `app/Http/Requests/Api/V1/RegisterRequest.php` | Creado |
+| `app/Http/Controllers/Api/V1/AuthController.php` | Modificado |
+| `tests/Feature/AuthRegisterTest.php` | Creado (12 tests) |
+
+### Frontend (creados / modificados)
+
+| Archivo | Acción |
+|---------|--------|
+| `resources/js/modules/auth/pages/RegisterPage.vue` | Creado |
+| `resources/js/modules/auth/pages/RegisterSuccessPage.vue` | Creado |
+| `resources/js/modules/auth/layouts/AuthPageShell.vue` | Creado |
+| `resources/js/modules/auth/composables/useRegisterValidation.js` | Creado |
+| `resources/js/stores/auth.js` | Modificado (`register()`) |
+| `resources/js/router/index.js` | Modificado |
+| `resources/js/router/guards.js` | Modificado |
+| `resources/js/App.vue` | Simplificado |
+| `resources/css/app.css` | Tokens PulseCare |
+| `resources/views/app.blade.php` | Fuentes Inter + Material |
+| `vite.config.js` | Redirect 5173 → 8000 |
+
+### Documentación
+
+| Archivo | Contenido |
+|---------|-----------|
+| `docs/sprints/sprint-02-registro-backend/README.md` | Este documento |
+| `docs/sprints/sprint-02-registro-backend/PRUEBAS.md` | Casos de prueba |
+| `docs/sprints/registro-usuarios/README.md` | Sprint completo consolidado |
+
+---
+
+## 10. Pruebas
+
+### Automatizadas
 
 ```bash
-# Solo registro
 php artisan test --filter=AuthRegister
-
-# Suite completa
-php artisan test
 ```
 
-**Resultado actual:** 10 tests pasando (8 de registro + 2 existentes).
+**12 tests — 48 assertions**
+
+| Tipo | Tests |
+|------|-------|
+| Positivos | Registro OK, email otro tenant, normalización email |
+| Fallidos | Duplicado, contraseña débil, mismatch, nombre inválido, email inválido, campos vacíos, sin tenant, tenant desconocido |
+
+### Manuales
+
+Ver **[PRUEBAS.md](./PRUEBAS.md)** — casos UI (P1–P8, F1–F8) y cURL.
 
 ---
 
-## 10. Prueba manual (cURL)
+## 11. Cómo ejecutar
 
-**Tenant demo:**
-```
-00000000-0000-4000-8000-000000000001
-```
-
-**Registro exitoso:**
 ```bash
-curl -X POST http://127.0.0.1:8000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-4000-8000-000000000001" \
-  -d "{\"name\":\"María López\",\"email\":\"maria@example.com\",\"password\":\"Password1!\",\"password_confirmation\":\"Password1!\"}"
+# Terminal 1
+php artisan serve
+
+# Terminal 2
+npm run dev
 ```
 
-**Email duplicado (segunda vez con mismo email):**
-```bash
-# Misma petición → 422
-```
+Abrir: **http://127.0.0.1:8000/**
 
-**Contraseña débil:**
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-4000-8000-000000000001" \
-  -d "{\"name\":\"Test User\",\"email\":\"otro@example.com\",\"password\":\"password\",\"password_confirmation\":\"password\"}"
-```
+### Prueba rápida
+
+1. Tenant: `00000000-0000-4000-8000-000000000001`
+2. Nombre: `María López`
+3. Email: único (ej. `paciente01@example.com`)
+4. Contraseña: `Password1!` (confirmar igual)
+5. **Registrarse** → pantalla de éxito → **Registrar otro paciente**
 
 ---
 
-## 11. Decisiones técnicas
+## 12. Decisiones técnicas
 
-| Decisión | Elección | Motivo |
-|----------|----------|--------|
-| Validación | Form Request dedicado | Separación de responsabilidades; reutilizable y testeable |
-| Email | `email:rfc` (sin DNS) | Evita fallos en entorno de tests sin resolución DNS |
-| Unique email | Scoped por `tenant_id` | Alineado con restricción BD `UNIQUE(tenant_id, email)` |
-| Contraseña | Reglas fuertes Laravel `Password` | Requisito del sprint: mayúscula, minúscula, número, símbolo |
-| Hash password | Cast `hashed` en modelo | Evita doble hash; convención Laravel 12 |
-| Rol al registrar | `Recepcionista` fijo | Sin cambio respecto al Sprint 1 |
-| Idioma errores | Español en Form Request | Sin archivos `lang/` globales por ahora |
-
----
-
-## 12. Pendiente — Sprint 3 (frontend)
-
-| Tarea | Archivo estimado |
-|-------|------------------|
-| Crear pantalla de registro | `resources/js/modules/auth/pages/RegisterPage.vue` |
-| Acción `register()` en store | `resources/js/stores/auth.js` |
-| Ruta `/register` | `resources/js/router/index.js` |
-| Enlace login ↔ registro | `LoginPage.vue` + `RegisterPage.vue` |
-| Errores 422 por campo | Componente de registro |
-| Redirect a home tras 201 | Store + router |
+| Decisión | Elección |
+|----------|----------|
+| Validación backend | Form Request dedicado |
+| Email unique | Scoped por `tenant_id` |
+| Contraseña | Reglas fuertes Laravel `Password` |
+| Flujo UI | Solo registro + éxito (sin home/login) |
+| Post-registro | Pantalla dedicada, no redirect a dashboard |
+| Otro paciente | `clearSession()` antes de nuevo registro |
+| URL desarrollo | `:8000` (Laravel), no `:5173` directo |
+| Errores | Español en Form Request + mapeo en Vue |
 
 ---
 
-## 13. Referencias cruzadas
+## 13. Historias de usuario cumplidas
+
+| ID | Historia | Estado |
+|----|----------|--------|
+| US-01 | Registrarme con nombre, email y contraseña | Cumplido |
+| US-02 | Ver errores claros si datos inválidos | Cumplido |
+| US-03 | Saber si email ya está registrado | Cumplido |
+| US-04 | Confirmación visual tras registro exitoso | Cumplido |
+| US-05 | Registrar otro paciente sin salir del módulo | Cumplido |
+| US-06 | UI profesional dominio médico (PulseCare) | Cumplido |
+
+---
+
+## 14. Referencias
 
 | Recurso | Ubicación |
 |---------|-----------|
-| Análisis BD y arquitectura | [Sprint 1 README](../sprint-01-registro-usuarios/README.md) |
+| Sprint completo | [../registro-usuarios/README.md](../registro-usuarios/README.md) |
+| Sprint 1 (análisis) | [../sprint-01-registro-usuarios/README.md](../sprint-01-registro-usuarios/README.md) |
+| Guía de pruebas | [PRUEBAS.md](./PRUEBAS.md) |
 | Form Request | `app/Http/Requests/Api/V1/RegisterRequest.php` |
-| Controlador | `app/Http/Controllers/Api/V1/AuthController.php` |
 | Tests | `tests/Feature/AuthRegisterTest.php` |
-| Login (referencia UI) | `resources/js/modules/auth/pages/LoginPage.vue` |
-| README proyecto | `README.md` (raíz) |
 
 ---
 
-*Sprint 2 — Backend de registro de usuarios. Última actualización: implementación de validaciones y tests completada.*
+*Sprint 2 — Registro de usuarios. Implementación completa: backend, UI PulseCare, integración FE-BE y flujo registro → éxito → otro paciente.*

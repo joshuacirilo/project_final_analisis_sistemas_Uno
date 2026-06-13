@@ -138,6 +138,46 @@ class AuthRegisterTest extends TestCase
             ->assertJsonPath('user.email', 'maria@example.com');
     }
 
+    public function test_register_rejects_invalid_email_format(): void
+    {
+        $payload = $this->validPayload(['email' => 'not-an-email']);
+
+        $response = $this->postJson('/api/v1/auth/register', $payload, $this->tenantHeaders());
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_register_rejects_name_with_invalid_characters(): void
+    {
+        $payload = $this->validPayload(['name' => 'Juan123']);
+
+        $response = $this->postJson('/api/v1/auth/register', $payload, $this->tenantHeaders());
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['name']);
+    }
+
+    public function test_register_rejects_missing_required_fields(): void
+    {
+        $response = $this->postJson('/api/v1/auth/register', [], $this->tenantHeaders());
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'email', 'password']);
+    }
+
+    public function test_register_rejects_unknown_tenant(): void
+    {
+        $response = $this->postJson('/api/v1/auth/register', $this->validPayload(), [
+            'X-Tenant-ID' => '00000000-0000-0000-0000-000000000099',
+        ]);
+
+        $response->assertNotFound()
+            ->assertJson([
+                'message' => 'Tenant no encontrado.',
+            ]);
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>

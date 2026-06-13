@@ -257,18 +257,8 @@
                         class="w-full rounded-lg bg-primary-container py-4 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
                         :disabled="isSubmitting"
                     >
-                        {{ isSubmitting ? 'Validando…' : 'Registrarse' }}
+                        {{ isSubmitting ? 'Registrando…' : 'Registrarse' }}
                     </button>
-                </div>
-
-                <!-- Login link -->
-                <div class="pt-2 text-center">
-                    <router-link
-                        class="text-sm font-medium text-primary transition-all hover:underline"
-                        :to="{ name: 'login' }"
-                    >
-                        ¿Ya tienes una cuenta? Inicia sesión
-                    </router-link>
                 </div>
             </form>
         </div>
@@ -300,13 +290,18 @@
 
 <script setup>
 import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import AuthPageShell from '@/modules/auth/layouts/AuthPageShell.vue';
-import { validateRegisterForm } from '@/modules/auth/composables/useRegisterValidation';
+import { mapApiErrors, validateRegisterForm } from '@/modules/auth/composables/useRegisterValidation';
+import { useAuthStore } from '@/stores/auth';
 
-const DEMO_TENANT_ID = '00000000-0000-4000-8000-000000000001';
+const router = useRouter();
+const auth = useAuthStore();
+
+const DEFAULT_TENANT_ID = '00000000-0000-4000-8000-000000000001';
 
 const form = reactive({
-    tenantId: DEMO_TENANT_ID,
+    tenantId: auth.tenantId ?? DEFAULT_TENANT_ID,
     name: '',
     email: '',
     password: '',
@@ -352,11 +347,10 @@ function onFieldBlur(field) {
     validateField(field);
 }
 
-function handleSubmit() {
+async function handleSubmit() {
     clearErrors();
     successMessage.value = '';
     globalError.value = '';
-    isSubmitting.value = true;
 
     const { errors: validationErrors, isValid } = validateRegisterForm(form);
 
@@ -368,23 +362,53 @@ function handleSubmit() {
         passwordConfirmation: validationErrors.passwordConfirmation ?? '',
     });
 
-    setTimeout(() => {
+    if (! isValid) {
+        return;
+    }
+
+    isSubmitting.value = true;
+
+    try {
+        await auth.register({
+            name: form.name.trim(),
+            email: form.email.trim(),
+            password: form.password,
+            passwordConfirmation: form.passwordConfirmation,
+            tenantId: form.tenantId.trim(),
+        });
+
+        await router.push({ name: 'register-success' });
+    } catch (error) {
+        const status = error?.response?.status;
+        const data = error?.response?.data ?? {};
+
+        if (status === 404) {
+            const message = data.message ?? 'El hospital indicado no existe';
+            globalError.value = message;
+            errors.tenantId = message;
+
+            return;
+        }
+
+        if (status === 400 && data.message?.includes('X-Tenant-ID')) {
+            globalError.value = data.message;
+            errors.tenantId = data.message;
+
+            return;
+        }
+
+        if (status === 422 && data.errors) {
+            const { fieldErrors, globalError: mappedGlobal } = mapApiErrors(data.errors);
+            Object.assign(errors, fieldErrors);
+            globalError.value = data.message ?? mappedGlobal;
+
+            return;
+        }
+
+        globalError.value = data.message ?? 'No fue posible completar el registro. Intenta de nuevo.';
+    } finally {
         isSubmitting.value = false;
-
-        if (! isValid) {
-            return;
-        }
-
-        // Simulación UI: tenant demo válido → éxito; otro UUID → error global
-        if (form.tenantId.trim() !== DEMO_TENANT_ID) {
-            globalError.value = 'El hospital indicado no existe';
-            errors.tenantId = 'El hospital indicado no existe';
-
-            return;
-        }
-
-        successMessage.value = 'Usuario registrado correctamente';
-    }, 400);
+    }
 }
 </script>
 

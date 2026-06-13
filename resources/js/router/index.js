@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomePage from '@/pages/HomePage.vue';
-import LoginPage from '@/modules/auth/pages/LoginPage.vue';
 import RegisterPage from '@/modules/auth/pages/RegisterPage.vue';
+import RegisterSuccessPage from '@/modules/auth/pages/RegisterSuccessPage.vue';
 import { authGuard } from '@/router/guards';
 
 const router = createRouter({
@@ -11,22 +10,27 @@ const router = createRouter({
             path: '/',
             name: 'register',
             component: RegisterPage,
-            meta: { guest: true, layout: 'auth' },
         },
         {
             path: '/register',
             redirect: { name: 'register' },
         },
         {
+            path: '/registro-exitoso',
+            name: 'register-success',
+            component: RegisterSuccessPage,
+        },
+        {
             path: '/inicio',
-            name: 'home',
-            component: HomePage,
+            redirect: { name: 'register' },
         },
         {
             path: '/login',
-            name: 'login',
-            component: LoginPage,
-            meta: { guest: true },
+            redirect: { name: 'register' },
+        },
+        {
+            path: '/:pathMatch(.*)*',
+            redirect: { name: 'register' },
         },
     ],
 });

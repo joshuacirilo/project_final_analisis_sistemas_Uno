@@ -1,8 +1,10 @@
-# Sprint 1 — Registro de usuarios
+# Sprint 1 — Registro de usuarios (Análisis)
+
+> **Documentación completa del sprint:** [Sprint completo — Registro de usuarios](../registro-usuarios/README.md)
 
 **Módulo asignado:** Registro de usuarios  
-**Objetivo del sprint:** Implementar o mejorar el formulario de registro, validaciones y mensajes de respuesta (frontend + backend).  
-**Estado actual:** Análisis y documentación base — el backend tiene un endpoint funcional mínimo; el frontend **no tiene pantalla de registro**.
+**Alcance:** Análisis de BD, API, brechas y backlog inicial  
+**Estado:** Completado (fase de análisis)
 
 ---
 
@@ -412,14 +414,7 @@ php artisan tinker
 
 ## Sprint 2 — Implementación backend (validaciones)
 
-**Estado:** Completado
-
-Documentación detallada del Sprint 2: **[Sprint 2 — Registro backend](../sprint-02-registro-backend/README.md)**
-
-Resumen:
-- `RegisterRequest` con validaciones en español
-- Email único por tenant, contraseña fuerte
-- 8 tests Feature en `AuthRegisterTest.php`
+**Estado:** Completado — ver [Sprint 2 — Implementación completa](../sprint-02-registro-backend/README.md)
 
 ---
 

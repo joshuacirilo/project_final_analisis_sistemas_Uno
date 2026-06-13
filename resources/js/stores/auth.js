@@ -29,6 +29,20 @@ export const useAuthStore = defineStore('auth', {
 
             return data;
         },
+        async register({ name, email, password, passwordConfirmation, tenantId }) {
+            this.setTenantId(tenantId);
+
+            const { data } = await api.post('/auth/register', {
+                name,
+                email,
+                password,
+                password_confirmation: passwordConfirmation,
+            });
+
+            this.persistSession(data);
+
+            return data;
+        },
         async logout() {
             try {
                 await api.post('/auth/logout');
