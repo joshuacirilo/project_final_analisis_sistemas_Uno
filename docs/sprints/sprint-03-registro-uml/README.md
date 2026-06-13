@@ -21,6 +21,8 @@ Documentar la arquitectura del módulo de registro mediante:
 
 Representa las clases PHP involucradas en `POST /api/v1/auth/register`.
 
+![Diagrama de clases — Backend](images/01-class-backend.png)
+
 ```mermaid
 classDiagram
     direction TB
@@ -104,6 +106,8 @@ classDiagram
 
 ### Relaciones con base de datos (Spatie Permission)
 
+![Diagrama de clases — Base de datos](images/02-class-database.png)
+
 ```mermaid
 classDiagram
     direction LR
@@ -144,6 +148,8 @@ classDiagram
 ## 3. Diagrama de clases — Frontend (Vue 3)
 
 Componentes y módulos del flujo de registro en el cliente.
+
+![Diagrama de clases — Frontend](images/03-class-frontend.png)
 
 ```mermaid
 classDiagram
@@ -228,6 +234,8 @@ classDiagram
 
 Flujo completo desde el formulario hasta la pantalla de éxito.
 
+![Secuencia — Registro exitoso](images/04-sequence-registro-exitoso.png)
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -280,6 +288,8 @@ sequenceDiagram
 
 Cuando el servidor rechaza los datos (email duplicado, contraseña débil, rol inválido, etc.).
 
+![Secuencia — Validación fallida 422](images/05-sequence-validacion-fallida.png)
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -316,6 +326,8 @@ sequenceDiagram
 
 ## 6. Diagrama de secuencia — Tenant inválido (404)
 
+![Secuencia — Tenant inválido 404](images/06-sequence-tenant-invalido.png)
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -341,6 +353,8 @@ sequenceDiagram
 
 Flujo desde la pantalla de éxito de vuelta al formulario.
 
+![Secuencia — Registrar otro paciente](images/07-sequence-registrar-otro.png)
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -363,6 +377,8 @@ sequenceDiagram
 ## 8. Diagrama de secuencia — Vista general FE ↔ BE
 
 Resumen de capas en una sola interacción.
+
+![Secuencia — Vista general FE ↔ BE](images/08-sequence-vista-general.png)
 
 ```mermaid
 sequenceDiagram
@@ -424,7 +440,30 @@ Validados con `Rule::exists('roles', 'name')` en `RegisterRequest`.
 
 ---
 
-## 11. Referencias
+## 11. Imágenes exportadas (PNG)
+
+Todas las imágenes están en la carpeta [`images/`](images/):
+
+| # | Archivo | Descripción |
+|---|---------|-------------|
+| 1 | [01-class-backend.png](images/01-class-backend.png) | Clases backend Laravel |
+| 2 | [02-class-database.png](images/02-class-database.png) | Tablas BD + Spatie |
+| 3 | [03-class-frontend.png](images/03-class-frontend.png) | Clases frontend Vue |
+| 4 | [04-sequence-registro-exitoso.png](images/04-sequence-registro-exitoso.png) | Secuencia registro OK |
+| 5 | [05-sequence-validacion-fallida.png](images/05-sequence-validacion-fallida.png) | Secuencia error 422 |
+| 6 | [06-sequence-tenant-invalido.png](images/06-sequence-tenant-invalido.png) | Secuencia error 404 |
+| 7 | [07-sequence-registrar-otro.png](images/07-sequence-registrar-otro.png) | Secuencia otro paciente |
+| 8 | [08-sequence-vista-general.png](images/08-sequence-vista-general.png) | Secuencia vista general |
+
+Los archivos fuente Mermaid están en [`diagrams/`](diagrams/) por si necesitas regenerarlas con:
+
+```bash
+npx @mermaid-js/mermaid-cli -i diagrams/01-class-backend.mmd -o images/01-class-backend.png -b white
+```
+
+---
+
+## 12. Referencias
 
 | Recurso | Ubicación |
 |---------|-----------|
