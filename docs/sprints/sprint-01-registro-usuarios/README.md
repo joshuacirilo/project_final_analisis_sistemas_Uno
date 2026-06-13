@@ -405,6 +405,21 @@ php artisan tinker
 | Store auth (Vue) | `resources/js/stores/auth.js` |
 | Login (referencia UI) | `resources/js/modules/auth/pages/LoginPage.vue` |
 | README general proyecto | `README.md` (raíz) |
+| Form Request registro | `app/Http/Requests/Api/V1/RegisterRequest.php` |
+| Tests registro | `tests/Feature/AuthRegisterTest.php` |
+
+---
+
+## Sprint 2 — Implementación backend (validaciones)
+
+**Estado:** Completado
+
+Documentación detallada del Sprint 2: **[Sprint 2 — Registro backend](../sprint-02-registro-backend/README.md)**
+
+Resumen:
+- `RegisterRequest` con validaciones en español
+- Email único por tenant, contraseña fuerte
+- 8 tests Feature en `AuthRegisterTest.php`
 
 ---
 

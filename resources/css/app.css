@@ -6,6 +6,40 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* PulseCare Medical — design tokens */
+    --color-primary: #003d9b;
+    --color-primary-container: #0052cc;
+    --color-on-primary-container: #c4d2ff;
+    --color-background: #f8f9ff;
+    --color-surface: #f8f9ff;
+    --color-on-surface: #011d35;
+    --color-on-surface-variant: #434654;
+    --color-outline-variant: #c3c6d6;
+    --color-error: #ba1a1a;
+    --color-error-container: #ffdad6;
+    --color-on-error-container: #93000a;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #eef4ff;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.medical-pattern {
+    background-color: #f8f9ff;
+    background-image:
+        radial-gradient(#0052cc 0.5px, transparent 0.5px),
+        radial-gradient(#0052cc 0.5px, #f8f9ff 0.5px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.05;
+}
+
+.auth-field:focus-within {
+    transform: scale(1.01);
+    transition: transform 0.15s ease;
 }

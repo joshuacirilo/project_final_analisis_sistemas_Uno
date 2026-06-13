@@ -5,8 +5,11 @@
                 Hospital HIS
             </div>
             <nav class="layout__nav">
-                <router-link class="layout__link" to="/">
+                <router-link class="layout__link" to="/inicio">
                     Inicio
+                </router-link>
+                <router-link class="layout__link" to="/">
+                    Registro
                 </router-link>
                 <router-link class="layout__link" to="/login">
                     Acceso

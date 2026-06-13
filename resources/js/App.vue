@@ -1,12 +1,17 @@
 <template>
-    <AppLayout>
+    <component :is="layoutComponent">
         <router-view />
-    </AppLayout>
+    </component>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import AppLayout from '@/shared/components/AppLayout.vue';
-</script>
 
-<style scoped>
-</style>
+const route = useRoute();
+
+const layoutComponent = computed(() => (
+    route.meta.layout === 'auth' ? 'div' : AppLayout
+));
+</script>

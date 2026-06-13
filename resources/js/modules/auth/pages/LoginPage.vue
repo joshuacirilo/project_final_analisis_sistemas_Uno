@@ -40,6 +40,11 @@
             <button class="login__submit" type="submit" :disabled="loading">
                 {{ loading ? 'Enviando…' : 'Entrar' }}
             </button>
+            <p class="login__footer">
+                <router-link class="login__link" :to="{ name: 'register' }">
+                    ¿No tienes cuenta? Regístrate
+                </router-link>
+            </p>
         </form>
     </section>
 </template>
@@ -137,5 +142,21 @@ async function handleSubmit() {
 .login__error {
     color: #b91c1c;
     font-size: 0.9rem;
+}
+
+.login__footer {
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
+.login__link {
+    color: #003d9b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.login__link:hover {
+    text-decoration: underline;
 }
 </style>
