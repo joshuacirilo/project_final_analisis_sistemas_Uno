@@ -1,0 +1,16 @@
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant RegisterPage
+    participant AuthStore
+    participant Axios
+    participant TenantMW as TenantMiddleware
+
+    Usuario->>RegisterPage: Envía con UUID tenant incorrecto
+    RegisterPage->>AuthStore: register(payload)
+    AuthStore->>Axios: POST /auth/register + X-Tenant-ID
+    Axios->>TenantMW: handle()
+    TenantMW->>TenantMW: Tenant::find(id) = null
+    TenantMW-->>Axios: 404 Tenant no encontrado
+    Axios-->>RegisterPage: error
+    RegisterPage-->>Usuario: Banner rojo + error en campo tenant

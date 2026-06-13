@@ -1,0 +1,78 @@
+classDiagram
+    direction TB
+
+    class AuthController {
+        +register(RegisterRequest) JsonResponse
+        +login(Request) JsonResponse
+        +me(Request) JsonResponse
+        +logout(Request) JsonResponse
+        +refresh(Request) JsonResponse
+    }
+
+    class RegisterRequest {
+        +authorize() bool
+        +prepareForValidation() void
+        +rules() array
+        +messages() array
+        +attributes() array
+    }
+
+    class TenantMiddleware {
+        +handle(Request, Closure) Response
+    }
+
+    class User {
+        +id: bigint
+        +tenant_id: string
+        +name: string
+        +email: string
+        +password: string
+        +tenant() BelongsTo
+        +getJWTIdentifier() mixed
+        +getJWTCustomClaims() array
+        +assignRole(role: string) void
+    }
+
+    class Tenant {
+        +id: string
+        +name: string
+        +slug: string
+        +data: array
+    }
+
+    class Role {
+        +id: bigint
+        +name: string
+        +guard_name: string
+    }
+
+    class JWTAuth {
+        <<facade>>
+        +fromUser(User) string
+        +factory() JWTFactory
+    }
+
+    class FormRequest {
+        <<abstract>>
+        +validated() array
+    }
+
+    class Authenticatable {
+        <<abstract>>
+    }
+
+    class BaseTenant {
+        <<Stancl>>
+    }
+
+    AuthController --> RegisterRequest : usa
+    AuthController --> User : crea
+    AuthController --> JWTAuth : emite token
+    RegisterRequest --|> FormRequest : extiende
+    RegisterRequest --> Tenant : tenant_id unique
+    RegisterRequest --> Role : role exists
+    TenantMiddleware --> Tenant : busca por X-Tenant-ID
+    User --|> Authenticatable : extiende
+    User --> Tenant : belongsTo
+    User --> Role : HasRoles
+    Tenant --|> BaseTenant : extiende

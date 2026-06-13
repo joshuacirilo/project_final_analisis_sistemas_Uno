@@ -94,6 +94,7 @@ flowchart LR
 | **2 — Backend** | Form Request, validaciones ES, tests | [sprint-02-registro-backend/README.md](../sprint-02-registro-backend/README.md) |
 | **3 — UI/UX** | RegisterPage, AuthPageShell, Tailwind PulseCare | Este documento §9 |
 | **4 — Integración** | Pinia + Axios + mapeo errores + redirect | Este documento §8 |
+| **5 — UML** | Diagramas de clases y secuencia | [sprint-03-registro-uml/README.md](../sprint-03-registro-uml/README.md) |
 
 ---
 
@@ -107,7 +108,7 @@ flowchart LR
 | Cliente HTTP | Axios | `POST /auth/register` + `X-Tenant-ID` |
 | Backend | Laravel 12 | Validación, persistencia, JWT |
 | Auth | tymon/jwt-auth | Token tras registro exitoso |
-| RBAC | spatie/laravel-permission | Rol `Recepcionista` al crear usuario |
+| RBAC | spatie/laravel-permission | Rol seleccionable al registrar |
 | Multitenancy | TenantMiddleware | Tenant por cabecera `X-Tenant-ID` |
 
 ### Flujo end-to-end
@@ -513,7 +514,8 @@ Abrir: **http://127.0.0.1:8000/**
 | Documento | Enlace |
 |-----------|--------|
 | Análisis Sprint 1 | [sprint-01-registro-usuarios/README.md](../sprint-01-registro-usuarios/README.md) |
-| **Sprint 2 (implementación)** | [sprint-02-registro-backend/README.md](../sprint-02-registro-backend/README.md) |
+| Sprint 2 (implementación) | [sprint-02-registro-backend/README.md](../sprint-02-registro-backend/README.md) |
+| **Sprint 3 (UML)** | [sprint-03-registro-uml/README.md](../sprint-03-registro-uml/README.md) |
 | Guía de pruebas | [sprint-02-registro-backend/PRUEBAS.md](../sprint-02-registro-backend/PRUEBAS.md) |
 | README proyecto | [README.md](../../README.md) (raíz) |
 

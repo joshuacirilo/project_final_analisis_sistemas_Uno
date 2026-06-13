@@ -1,0 +1,43 @@
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant RegisterPage
+    participant Validation as useRegisterValidation
+    participant AuthStore
+    participant Axios
+    participant TenantMW as TenantMiddleware
+    participant RegisterReq as RegisterRequest
+    participant AuthCtrl as AuthController
+    participant User as User Model
+    participant Role as Spatie Role
+    participant JWT as JWTAuth
+    participant SuccessPage as RegisterSuccessPage
+
+    Usuario->>RegisterPage: Completa formulario y envía
+    RegisterPage->>Validation: validateRegisterForm(form)
+    Validation-->>RegisterPage: isValid = true
+
+    RegisterPage->>AuthStore: register(payload)
+    AuthStore->>AuthStore: setTenantId(tenantId)
+    AuthStore->>Axios: POST /auth/register
+
+    Axios->>TenantMW: Request + X-Tenant-ID
+    TenantMW->>TenantMW: find(tenantId)
+    TenantMW->>RegisterReq: pasa request con tenant
+
+    RegisterReq->>RegisterReq: prepareForValidation()
+    RegisterReq->>RegisterReq: rules() + validación OK
+    RegisterReq->>AuthCtrl: validated()
+
+    AuthCtrl->>User: create(name, email, password, tenant_id)
+    AuthCtrl->>Role: assignRole(role seleccionado)
+    AuthCtrl->>JWT: fromUser(user)
+    JWT-->>AuthCtrl: access_token
+
+    AuthCtrl-->>Axios: 201 JSON user + token
+    Axios-->>AuthStore: response
+    AuthStore->>AuthStore: persistSession()
+    AuthStore-->>RegisterPage: OK
+
+    RegisterPage->>SuccessPage: router.push(/registro-exitoso)
+    SuccessPage-->>Usuario: Muestra resumen + rol asignado

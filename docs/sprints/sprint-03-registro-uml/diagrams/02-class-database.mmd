@@ -1,0 +1,32 @@
+classDiagram
+    direction LR
+
+    class users {
+        +id PK
+        +tenant_id FK
+        +name
+        +email
+        +password
+    }
+
+    class tenants {
+        +id PK
+        +name
+        +slug UK
+    }
+
+    class roles {
+        +id PK
+        +name
+        +guard_name
+    }
+
+    class model_has_roles {
+        +role_id FK
+        +model_type
+        +model_id FK
+    }
+
+    tenants "1" --> "*" users : contiene
+    users "1" --> "*" model_has_roles : asignado
+    roles "1" --> "*" model_has_roles : define

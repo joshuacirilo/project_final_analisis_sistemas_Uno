@@ -326,6 +326,7 @@ Abrir: **http://127.0.0.1:8000/**
 |---------|-----------|
 | Sprint completo | [../registro-usuarios/README.md](../registro-usuarios/README.md) |
 | Sprint 1 (análisis) | [../sprint-01-registro-usuarios/README.md](../sprint-01-registro-usuarios/README.md) |
+| **Sprint 3 (UML)** | [sprint-03-registro-uml/README.md](../sprint-03-registro-uml/README.md) |
 | Guía de pruebas | [PRUEBAS.md](./PRUEBAS.md) |
 | Form Request | `app/Http/Requests/Api/V1/RegisterRequest.php` |
 | Tests | `tests/Feature/AuthRegisterTest.php` |

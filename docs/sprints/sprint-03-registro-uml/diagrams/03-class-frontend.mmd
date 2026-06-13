@@ -1,0 +1,74 @@
+classDiagram
+    direction TB
+
+    class RegisterPage {
+        -form: RegisterForm
+        -errors: FieldErrors
+        -isSubmitting: boolean
+        +handleSubmit() Promise
+        +validateField(field) void
+        +fieldBorderClass(field) string
+    }
+
+    class RegisterSuccessPage {
+        -registeredUser: User
+        +registerAgain() void
+    }
+
+    class AuthPageShell {
+        +slot default
+        +slot alert
+    }
+
+    class AuthStore {
+        +token: string
+        +tenantId: string
+        +user: User
+        +setTenantId(tenantId) void
+        +register(payload) Promise
+        +persistSession(payload) void
+        +clearSession() void
+    }
+
+    class AxiosPlugin {
+        +baseURL: string
+        +interceptors: RequestInterceptor
+    }
+
+    class RegisterValidation {
+        <<composable>>
+        +validateRegisterForm(form) ValidationResult
+        +mapApiErrors(apiErrors) MappedErrors
+        +REGISTER_ROLE_OPTIONS: RoleOption[]
+    }
+
+    class VueRouter {
+        +push(route) Promise
+        +replace(route) Promise
+    }
+
+    class AuthGuard {
+        +authGuard(to, from, next) void
+    }
+
+    class RegisterForm {
+        <<DTO>>
+        +tenantId: string
+        +name: string
+        +email: string
+        +role: string
+        +password: string
+        +passwordConfirmation: string
+    }
+
+    RegisterPage --> AuthPageShell : usa layout
+    RegisterSuccessPage --> AuthPageShell : usa layout
+    RegisterPage --> AuthStore : register()
+    RegisterPage --> RegisterValidation : validateRegisterForm
+    RegisterPage --> RegisterValidation : mapApiErrors
+    RegisterSuccessPage --> AuthStore : clearSession
+    AuthStore --> AxiosPlugin : POST /auth/register
+    RegisterPage --> VueRouter : push register-success
+    RegisterSuccessPage --> VueRouter : push register
+    AuthGuard --> VueRouter : beforeEach
+    RegisterPage --> RegisterForm : contiene

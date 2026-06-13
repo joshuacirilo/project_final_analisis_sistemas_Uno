@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant RegisterPage
+    participant Validation as useRegisterValidation
+    participant AuthStore
+    participant Axios
+    participant TenantMW as TenantMiddleware
+    participant RegisterReq as RegisterRequest
+
+    Usuario->>RegisterPage: Envía formulario inválido
+    RegisterPage->>Validation: validateRegisterForm(form)
+
+    alt Error local detectado
+        Validation-->>RegisterPage: isValid = false, errors
+        RegisterPage-->>Usuario: Muestra errores por campo
+    else Pasa validación local
+        Validation-->>RegisterPage: isValid = true
+        RegisterPage->>AuthStore: register(payload)
+        AuthStore->>Axios: POST /auth/register
+        Axios->>TenantMW: Request + X-Tenant-ID
+        TenantMW->>RegisterReq: validación servidor
+        RegisterReq-->>Axios: 422 Unprocessable Entity
+        Axios-->>AuthStore: error response
+        AuthStore-->>RegisterPage: throw error
+        RegisterPage->>Validation: mapApiErrors(errors)
+        Validation-->>RegisterPage: fieldErrors
+        RegisterPage-->>Usuario: Errores en campos + banner
+    end

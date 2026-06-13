@@ -1,0 +1,24 @@
+sequenceDiagram
+    box Frontend Vue 3
+        participant UI as RegisterPage
+        participant Store as Pinia authStore
+        participant HTTP as Axios
+    end
+
+    box Backend Laravel 12
+        participant MW as TenantMiddleware
+        participant Req as RegisterRequest
+        participant Ctrl as AuthController
+        participant DB as Base de datos
+    end
+
+    UI->>Store: register()
+    Store->>HTTP: POST /api/v1/auth/register
+    HTTP->>MW: X-Tenant-ID
+    MW->>Req: tenant en attributes
+    Req->>Ctrl: validated data
+    Ctrl->>DB: INSERT users
+    Ctrl->>DB: INSERT model_has_roles
+    Ctrl->>HTTP: 201 + JWT
+    HTTP->>Store: persistSession
+    Store->>UI: éxito

@@ -1,0 +1,14 @@
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant SuccessPage as RegisterSuccessPage
+    participant AuthStore
+    participant AuthGuard
+    participant RegisterPage
+
+    Usuario->>SuccessPage: Clic en Registrar otro paciente
+    SuccessPage->>AuthStore: clearSession()
+    Note over AuthStore: Elimina token y user de localStorage
+    SuccessPage->>RegisterPage: router.push(/)
+    AuthGuard->>AuthGuard: token = null, permite acceso
+    RegisterPage-->>Usuario: Formulario limpio listo para nuevo registro
